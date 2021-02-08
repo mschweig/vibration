@@ -1,9 +1,14 @@
 #include <Arduino.h>
 
+int analogPin = A3; // Pin, der gelesen werden soll: Pin A3
+int val = 0; // Variable, die den gelesenen Wert speichert
+
 void setup() {
-  // put your setup code here, to run once:
+  Serial.begin(9600); // Setup der seriellen Verbindung
+  Serial.println("Setup completed");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  val = analogRead(analogPin); // Pin einlesen
+  Serial.println(val); // Wert ausgeben
 }
