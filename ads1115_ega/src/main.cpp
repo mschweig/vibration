@@ -36,7 +36,6 @@ void loop(void)
   results = ads.readADC_Differential_0_1();  
     
   //Serial.print("Differential: "); Serial.print(results); Serial.print("("); @180 SPS
-  analogWrite(A0,100);
   Serial.println(results * multiplier);
 
 }
