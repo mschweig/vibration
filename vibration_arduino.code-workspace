@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "mpu6050_mega"
+		},
+		{
+			"path": "ads1115_mega"
+		},
+		{
+			"path": "adxl343_mega"
+		}
+	],
+	"settings": {}
+}

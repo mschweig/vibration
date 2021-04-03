@@ -109,7 +109,7 @@ void setup(void)
 {
   Serial.begin(115200);
   while (!Serial);
-  Serial.println("Accelerometer Test"); Serial.println("");
+  //Serial.println("Accelerometer Test"); Serial.println("");
 
   /* Initialise the sensor */
   if(!accel.begin())
@@ -120,29 +120,58 @@ void setup(void)
   }
 
   /* Set the range to whatever is appropriate for your project */
-  accel.setRange(ADXL343_RANGE_16_G);
+  // accel.setRange(ADXL343_RANGE_16_G);
   // accel.setRange(ADXL343_RANGE_8_G);
   // accel.setRange(ADXL343_RANGE_4_G);
-  // accel.setRange(ADXL343_RANGE_2_G);
+  accel.setRange(ADXL343_RANGE_2_G);
 
   accel.setDataRate(ADXL343_DATARATE_3200_HZ);
 
-  /* Display some basic information on this sensor */
+  /* Display some basic information on this sensor
   accel.printSensorDetails();
   displayDataRate();
   displayRange();
   Serial.println("");
+  */
 }
+
+float x_ac[500];
+float y_ac[500];
+float z_ac[500];
+size_t i = 0;
 
 void loop(void)
 {
+ 
   /* Get a new sensor event */
   sensors_event_t event;
   accel.getEvent(&event);
 
-  /* Display the results (acceleration is measured in m/s^2) */
-  Serial.print("X: "); Serial.print(event.acceleration.x); Serial.print("  ");
-  Serial.print("Y: "); Serial.print(event.acceleration.y); Serial.print("  ");
-  Serial.print("Z: "); Serial.print(event.acceleration.z); Serial.print("  ");Serial.println("m/s^2 ");
-  delay(500);
+  /*
+  x_ac[i] = event.acceleration.x;
+  y_ac[i] = event.acceleration.y;
+  z_ac[i] = event.acceleration.z;
+
+  i++;
+
+  if (i >= 500){
+    Serial.println("X");
+    for (size_t j = 0; j<500; j++)
+      Serial.println(x_ac[j],8);
+    Serial.println("Y");
+    for (size_t j = 0; j<500; j++)
+      Serial.println(y_ac[j],8);
+    Serial.println("Z");
+    for (size_t j = 0; j<500; j++)
+      Serial.println(z_ac[j],8);  
+    Serial.println("Finished");
+    while(1);
+  }
+
+*/
+Serial.print(event.acceleration.z);
+Serial.print("\t");
+Serial.println(event.acceleration.y);
+
+
 }
