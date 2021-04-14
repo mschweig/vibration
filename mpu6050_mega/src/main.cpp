@@ -1,116 +1,61 @@
 #include <Arduino.h>
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
-#include <Wire.h>
+// I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
+// for both classes must be in the include path of your project
+#include "I2Cdev.h"
+#include "MPU6050.h"
 
-Adafruit_MPU6050 mpu;
+// Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
+// is used in I2Cdev.h
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+    #include "Wire.h"
+#endif
 
-void setup(void) {
-  Serial.begin(115200);
-  while (!Serial)
-    delay(10); // will pause Zero, Leonardo, etc until serial console opens
+// class default I2C address is 0x68
+// specific I2C addresses may be passed as a parameter here
+// AD0 low = 0x68 (default for InvenSense evaluation board)
+// AD0 high = 0x69
+MPU6050 accelgyro;
+//MPU6050 accelgyro(0x69); // <-- use for AD0 high
 
-  Serial.println("Adafruit MPU6050 test!");
 
-  // Try to initialize!
-  if (!mpu.begin()) {
-    Serial.println("Failed to find MPU6050 chip");
-    while (1) {
-      delay(10);
-    }
-  }
-  Serial.println("MPU6050 Found!");
+void setup() {
+    // join I2C bus (I2Cdev library doesn't do this automatically)
+    #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+        Wire.begin();
+    #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+        Fastwire::setup(400, true);
+    #endif
 
-  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-  Serial.print("Accelerometer range set to: ");
-  switch (mpu.getAccelerometerRange()) {
-  case MPU6050_RANGE_2_G:
-    Serial.println("+-2G");
-    break;
-  case MPU6050_RANGE_4_G:
-    Serial.println("+-4G");
-    break;
-  case MPU6050_RANGE_8_G:
-    Serial.println("+-8G");
-    break;
-  case MPU6050_RANGE_16_G:
-    Serial.println("+-16G");
-    break;
-  }
-  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-  Serial.print("Gyro range set to: ");
-  switch (mpu.getGyroRange()) {
-  case MPU6050_RANGE_250_DEG:
-    Serial.println("+- 250 deg/s");
-    break;
-  case MPU6050_RANGE_500_DEG:
-    Serial.println("+- 500 deg/s");
-    break;
-  case MPU6050_RANGE_1000_DEG:
-    Serial.println("+- 1000 deg/s");
-    break;
-  case MPU6050_RANGE_2000_DEG:
-    Serial.println("+- 2000 deg/s");
-    break;
-  }
+    // initialize serial communication
+    // (38400 chosen because it works as well at 8MHz as it does at 16MHz, but
+    // it's really up to you depending on your project)
+    Serial.begin(115200);
 
-  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-  Serial.print("Filter bandwidth set to: ");
-  switch (mpu.getFilterBandwidth()) {
-  case MPU6050_BAND_260_HZ:
-    Serial.println("260 Hz");
-    break;
-  case MPU6050_BAND_184_HZ:
-    Serial.println("184 Hz");
-    break;
-  case MPU6050_BAND_94_HZ:
-    Serial.println("94 Hz");
-    break;
-  case MPU6050_BAND_44_HZ:
-    Serial.println("44 Hz");
-    break;
-  case MPU6050_BAND_21_HZ:
-    Serial.println("21 Hz");
-    break;
-  case MPU6050_BAND_10_HZ:
-    Serial.println("10 Hz");
-    break;
-  case MPU6050_BAND_5_HZ:
-    Serial.println("5 Hz");
-    break;
-  }
+    // initialize device
+    accelgyro.initialize();
 
-  Serial.println("");
-  delay(100);
+    // verify connection
+    accelgyro.testConnection();
+
 }
+size_t i = 0;
+
+uint16_t t_start = millis();
 
 void loop() {
 
-  /* Get new sensor events with the readings */
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
+   Serial.println(accelgyro.getAccelerationZ());
 
-  /* Print out the values */
-  Serial.print("Acceleration X: ");
-  Serial.print(a.acceleration.x);
-  Serial.print(", Y: ");
-  Serial.print(a.acceleration.y);
-  Serial.print(", Z: ");
-  Serial.print(a.acceleration.z);
-  Serial.println(" m/s^2");
+   i++;
 
-  Serial.print("Rotation X: ");
-  Serial.print(g.gyro.x);
-  Serial.print(", Y: ");
-  Serial.print(g.gyro.y);
-  Serial.print(", Z: ");
-  Serial.print(g.gyro.z);
-  Serial.println(" rad/s");
-
-  Serial.print("Temperature: ");
-  Serial.print(temp.temperature);
-  Serial.println(" degC");
-
-  Serial.println("");
-  delay(500);
+   if (millis() - t_start >= 1000){
+    /**uint16_t t_end = millis();
+    Serial.println(t_end - t_start);
+    while(1);
+    **/
+   Serial.println(i);
+   while(1);
+   }
+   
+  
 }

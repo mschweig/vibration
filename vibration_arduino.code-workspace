@@ -8,6 +8,10 @@
 		},
 		{
 			"path": "adxl343_mega"
+		},
+		{
+			"name": "adxl345_mega",
+			"path": "adxl345_mega"
 		}
 	],
 	"settings": {}

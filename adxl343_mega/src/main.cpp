@@ -127,19 +127,37 @@ void setup(void)
 
   accel.setDataRate(ADXL343_DATARATE_3200_HZ);
 
-  /* Display some basic information on this sensor
+  /** Display some basic information on this sensor
   accel.printSensorDetails();
   displayDataRate();
   displayRange();
   Serial.println("");
-  */
+  **/
+
+  /**
+  Sensor:       ADXL343
+  Type:         Acceleration (m/s2)
+  Driver Ver:   1
+  Unique ID:    12345
+  Min Value:    -156.91
+  Max Value:    156.91
+  Resolution:   0.04
+  ------------------------------------
+
+  Data Rate:    3200  Hz
+  Range:         +/- 2  g
+  
+
+
+ Serial.print("z");
+ Serial.print("\t");
+ Serial.println("y");
+ **/
+
+
 }
-
-float x_ac[500];
-float y_ac[500];
-float z_ac[500];
 size_t i = 0;
-
+float z[3200];
 void loop(void)
 {
  
@@ -147,31 +165,20 @@ void loop(void)
   sensors_event_t event;
   accel.getEvent(&event);
 
-  /*
-  x_ac[i] = event.acceleration.x;
-  y_ac[i] = event.acceleration.y;
-  z_ac[i] = event.acceleration.z;
+  //Serial.println(event.acceleration.z,8);
 
+  z[i] = event.acceleration.z;
+ 
   i++;
 
-  if (i >= 500){
-    Serial.println("X");
-    for (size_t j = 0; j<500; j++)
-      Serial.println(x_ac[j],8);
-    Serial.println("Y");
-    for (size_t j = 0; j<500; j++)
-      Serial.println(y_ac[j],8);
-    Serial.println("Z");
-    for (size_t j = 0; j<500; j++)
-      Serial.println(z_ac[j],8);  
-    Serial.println("Finished");
+  if (i >= 3200){
+    Serial.println(millis());
     while(1);
   }
-
-*/
-Serial.print(event.acceleration.z);
-Serial.print("\t");
-Serial.println(event.acceleration.y);
-
+  /*
+  Serial.print(event.acceleration.z);
+  Serial.print("\t");
+  Serial.println(event.acceleration.y);
+  */
 
 }
