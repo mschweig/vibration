@@ -157,7 +157,8 @@ void setup(void)
 
 }
 size_t i = 0;
-float z[3200];
+uint16_t t_start = millis();
+float z[1000];
 void loop(void)
 {
  
@@ -171,8 +172,17 @@ void loop(void)
  
   i++;
 
-  if (i >= 3200){
-    Serial.println(millis());
+  if (i >= 1000){
+    
+    float t_end = millis();
+    Serial.println(t_end);
+    float frequency = 1/(t_end/1000)*1000;
+    Serial.print("Sampling Frequency: ");
+    Serial.println(frequency);
+
+    for (int i = 0; i<1000; i++)
+      Serial.println(z[i]);
+
     while(1);
   }
   /*

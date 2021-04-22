@@ -12,6 +12,10 @@
 		{
 			"name": "adxl345_mega",
 			"path": "adxl345_mega"
+		},
+		{
+			"name": "solenoid_nano",
+			"path": "solenoid_nano"
 		}
 	],
 	"settings": {}

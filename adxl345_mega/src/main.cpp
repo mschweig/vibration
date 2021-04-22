@@ -1,150 +1,130 @@
-#include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_ADXL345_U.h>
+#include <SparkFun_ADXL345.h>         // SparkFun ADXL345 Library
 
-/* Assign a unique ID to this sensor at the same time */
-Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
+/*********** COMMUNICATION SELECTION ***********/
+/*    Comment Out The One You Are Not Using    */
+//ADXL345 adxl = ADXL345(10);           // USE FOR SPI COMMUNICATION, ADXL345(CS_PIN);
+ADXL345 adxl = ADXL345();             // USE FOR I2C COMMUNICATION
 
-void displaySensorDetails(void)
-{
-  sensor_t sensor;
-  accel.getSensor(&sensor);
-  Serial.println("------------------------------------");
-  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
-  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
-  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
-  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" m/s^2");
-  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" m/s^2");
-  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" m/s^2");  
-  Serial.println("------------------------------------");
-  Serial.println("");
-  delay(500);
+void setup(){
+  
+  Serial.begin(115200);                 // Start the serial terminal
+
+  Serial.println();
+  
+  adxl.powerOn();                     // Power on the ADXL345
+
+  adxl.setRangeSetting(16);           // Give the range settings
+                                      // Accepted values are 2g, 4g, 8g or 16g
+                                      // Higher Values = Wider Measurement Range
+                                      // Lower Values = Greater Sensitivity
+
+  adxl.setSpiBit(0);                  // Configure the device to be in 4 wire SPI mode when set to '0' or 3 wire SPI mode when set to 1
+                                      // Default: Set to 1
+                                      // SPI pins on the ATMega328: 11, 12 and 13 as reference in SPI Library 
+   
+  adxl.setActivityXYZ(1, 0, 0);       // Set to activate movement detection in the axes "adxl.setActivityXYZ(X, Y, Z);" (1 == ON, 0 == OFF)
+  adxl.setActivityThreshold(75);      // 62.5mg per increment   // Set activity   // Inactivity thresholds (0-255)
+ 
+  adxl.setInactivityXYZ(1, 0, 0);     // Set to detect inactivity in all the axes "adxl.setInactivityXYZ(X, Y, Z);" (1 == ON, 0 == OFF)
+  adxl.setInactivityThreshold(75);    // 62.5mg per increment   // Set inactivity // Inactivity thresholds (0-255)
+  adxl.setTimeInactivity(10);         // How many seconds of no activity is inactive?
+
+  adxl.setTapDetectionOnXYZ(0, 0, 1); // Detect taps in the directions turned ON "adxl.setTapDetectionOnX(X, Y, Z);" (1 == ON, 0 == OFF)
+ 
+  // Set values for what is considered a TAP and what is a DOUBLE TAP (0-255)
+  adxl.setTapThreshold(50);           // 62.5 mg per increment
+  adxl.setTapDuration(15);            // 625 μs per increment
+  adxl.setDoubleTapLatency(80);       // 1.25 ms per increment
+  adxl.setDoubleTapWindow(200);       // 1.25 ms per increment
+ 
+  // Set values for what is considered FREE FALL (0-255)
+  adxl.setFreeFallThreshold(7);       // (5 - 9) recommended - 62.5mg per increment
+  adxl.setFreeFallDuration(30);       // (20 - 70) recommended - 5ms per increment
+ 
+  // Setting all interupts to take place on INT1 pin
+  //adxl.setImportantInterruptMapping(1, 1, 1, 1, 1);     // Sets "adxl.setEveryInterruptMapping(single tap, double tap, free fall, activity, inactivity);" 
+                                                        // Accepts only 1 or 2 values for pins INT1 and INT2. This chooses the pin on the ADXL345 to use for Interrupts.
+                                                        // This library may have a problem using INT2 pin. Default to INT1 pin.
+  
+  // Turn on Interrupts for each mode (1 == ON, 0 == OFF)
+  adxl.InactivityINT(0);
+  adxl.ActivityINT(0);
+  adxl.FreeFallINT(0);
+  adxl.doubleTapINT(0);
+  adxl.singleTapINT(0);
+  
+//attachInterrupt(digitalPinToInterrupt(interruptPin), ADXL_ISR, RISING);   // Attach Interrupt
+
 }
 
-void displayDataRate(void)
-{
-  Serial.print  ("Data Rate:    "); 
-  
-  switch(accel.getDataRate())
-  {
-    case ADXL345_DATARATE_3200_HZ:
-      Serial.print  ("3200 "); 
-      break;
-    case ADXL345_DATARATE_1600_HZ:
-      Serial.print  ("1600 "); 
-      break;
-    case ADXL345_DATARATE_800_HZ:
-      Serial.print  ("800 "); 
-      break;
-    case ADXL345_DATARATE_400_HZ:
-      Serial.print  ("400 "); 
-      break;
-    case ADXL345_DATARATE_200_HZ:
-      Serial.print  ("200 "); 
-      break;
-    case ADXL345_DATARATE_100_HZ:
-      Serial.print  ("100 "); 
-      break;
-    case ADXL345_DATARATE_50_HZ:
-      Serial.print  ("50 "); 
-      break;
-    case ADXL345_DATARATE_25_HZ:
-      Serial.print  ("25 "); 
-      break;
-    case ADXL345_DATARATE_12_5_HZ:
-      Serial.print  ("12.5 "); 
-      break;
-    case ADXL345_DATARATE_6_25HZ:
-      Serial.print  ("6.25 "); 
-      break;
-    case ADXL345_DATARATE_3_13_HZ:
-      Serial.print  ("3.13 "); 
-      break;
-    case ADXL345_DATARATE_1_56_HZ:
-      Serial.print  ("1.56 "); 
-      break;
-    case ADXL345_DATARATE_0_78_HZ:
-      Serial.print  ("0.78 "); 
-      break;
-    case ADXL345_DATARATE_0_39_HZ:
-      Serial.print  ("0.39 "); 
-      break;
-    case ADXL345_DATARATE_0_20_HZ:
-      Serial.print  ("0.20 "); 
-      break;
-    case ADXL345_DATARATE_0_10_HZ:
-      Serial.print  ("0.10 "); 
-      break;
-    default:
-      Serial.print  ("???? "); 
-      break;
-  }  
-  Serial.println(" Hz");  
-}
+/****************** MAIN CODE ******************/
+int k = 0;
+uint16_t t_start = millis();
+int z_accel[1000];
 
-void displayRange(void)
+void loop(void)
 {
-  Serial.print  ("Range:         +/- "); 
-  
-  switch(accel.getRange())
-  {
-    case ADXL345_RANGE_16_G:
-      Serial.print  ("16 "); 
-      break;
-    case ADXL345_RANGE_8_G:
-      Serial.print  ("8 "); 
-      break;
-    case ADXL345_RANGE_4_G:
-      Serial.print  ("4 "); 
-      break;
-    case ADXL345_RANGE_2_G:
-      Serial.print  ("2 "); 
-      break;
-    default:
-      Serial.print  ("?? "); 
-      break;
-  }  
-  Serial.println(" g");  
-}
+ 
+  /* Get a new sensor event */
+  int x,y,z;   
+  adxl.readAccel(&x, &y, &z);  
 
-void setup(void) 
-{
-#ifndef ESP8266
-  while (!Serial); // for Leonardo/Micro/Zero
-#endif
-  Serial.begin(115200);
-  
-  /* Initialise the sensor */
-  if(!accel.begin())
-  {
-    /* There was a problem detecting the ADXL345 ... check your connections */
-    Serial.println("Ooops, no ADXL345 detected ... Check your wiring!");
+  //Serial.println(event.acceleration.z,8);
+
+  z_accel[k] = z;
+ 
+  k++;
+
+  if (k >= 1000){
+    
+    float t_end = millis();
+    Serial.println(t_end);
+    float frequency = 1/(t_end/1000)*1000;
+    Serial.print("Sampling Frequency: ");
+    Serial.println(frequency);
+
+    for (int j = 0; j<1000; j++)
+      Serial.println(z_accel[j]);
+
     while(1);
   }
-
-  /* Set the range to whatever is appropriate for your project */
-  // accel.setRange(ADXL345_RANGE_16_G);
-  // accel.setRange(ADXL345_RANGE_8_G);
-  // accel.setRange(ADXL345_RANGE_4_G);
-  accel.setRange(ADXL345_RANGE_2_G);
-  accel.setDataRate(ADXL345_DATARATE_800_HZ);
-  
-  /* Display some basic information on this sensor */
-  //displaySensorDetails();
-  
-  /* Display additional settings (outside the scope of sensor_t) */
-  //displayDataRate();
-  //displayRange();
-  //Serial.println("");
 }
 
-void loop(void) 
-{
-  /* Get a new sensor event */ 
-  sensors_event_t event; 
-  accel.getEvent(&event);
- 
-  /* Display the results (acceleration is measured in m/s^2) */
-  Serial.println(event.acceleration.z);
+/********************* ISR *********************/
+/* Look for Interrupts and Triggered Action    */
+void ADXL_ISR() {
+  
+  // getInterruptSource clears all triggered actions after returning value
+  // Do not call again until you need to recheck for triggered actions
+  byte interrupts = adxl.getInterruptSource();
+  
+  // Free Fall Detection
+  if(adxl.triggered(interrupts, ADXL345_FREE_FALL)){
+    Serial.println("*** FREE FALL ***");
+    //add code here to do when free fall is sensed
+  } 
+  
+  // Inactivity
+  if(adxl.triggered(interrupts, ADXL345_INACTIVITY)){
+    Serial.println("*** INACTIVITY ***");
+     //add code here to do when inactivity is sensed
+  }
+  
+  // Activity
+  if(adxl.triggered(interrupts, ADXL345_ACTIVITY)){
+    Serial.println("*** ACTIVITY ***"); 
+     //add code here to do when activity is sensed
+  }
+  
+  // Double Tap Detection
+  if(adxl.triggered(interrupts, ADXL345_DOUBLE_TAP)){
+    Serial.println("*** DOUBLE TAP ***");
+     //add code here to do when a 2X tap is sensed
+  }
+  
+  // Tap Detection
+  if(adxl.triggered(interrupts, ADXL345_SINGLE_TAP)){
+    Serial.println("*** TAP ***");
+     //add code here to do when a tap is sensed
+  } 
 }
