@@ -6,7 +6,7 @@
 	"context": "..",
 
 	// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
-	"image": "nrf-v150-docker",
+	"image": "sdk-cc-1.5.0",
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": { 
