@@ -1,0 +1,158 @@
+# The west manifest file (west.yml) for the nRF Connect SDK (NCS).
+#
+# The per-workspace west configuration file, ncs/.west/config,
+# specifies the location of this manifest file like this:
+#
+#     [manifest]
+#     path = nrf
+#
+# See the west documentation for more information:
+#
+# https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/guides/west/index.html
+
+manifest:
+  # This west.yml requires west 0.9 or later, because the "submodules"
+  # feature used below was introduced then.
+  version: 0.9
+
+  # "remotes" is a list of locations where git repositories are cloned
+  # and fetched from.
+  remotes:
+    # nRF Connect SDK GitHub organization.
+    # NCS repositories are hosted here.
+    - name: ncs
+      url-base: https://github.com/nrfconnect
+    # Third-party repository sources:
+    - name: zephyrproject
+      url-base: https://github.com/zephyrproject-rtos
+    - name: throwtheswitch
+      url-base: https://github.com/ThrowTheSwitch
+    - name: armmbed
+      url-base: https://github.com/ARMmbed
+    - name: nanopb
+      url-base: https://github.com/nanopb
+    - name: alexa
+      url-base: https://github.com/alexa
+    - name: nordicsemi
+      url-base: https://github.com/NordicSemiconductor
+
+  # If not otherwise specified, the projects below should be obtained
+  # from the ncs remote.
+  defaults:
+    remote: ncs
+
+  # "projects" is a list of git repositories which make up the NCS
+  # source code.
+  projects:
+
+    # The Zephyr RTOS fork in the NCS, along with the subset of its
+    # modules which NCS imports directly.
+    #
+    # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/introduction/index.html
+    # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/guides/modules.html
+    - name: zephyr
+      repo-path: sdk-zephyr
+      revision: v2.4.99-ncs2
+      import:
+        # In addition to the zephyr repository itself, NCS also
+        # imports the contents of zephyr/west.yml at the above
+        # revision. Only the projects explicitly named in the
+        # following whitelist are imported.
+        #
+        # Note that the zephyr west extensions (like 'build', 'flash',
+        # 'debug', etc.) are automatically provided by this import, so
+        # there's no need to add a redundant west-commands: key for
+        # the zephyr project.
+        #
+        # Please keep this list sorted alphabetically.
+        name-whitelist:
+          - canopennode
+          - cmsis
+          - civetweb
+          - edtt
+          - fatfs
+          - hal_st
+          - libmetal
+          - littlefs
+          - loramac-node
+          - lvgl
+          - mbedtls
+          - mcumgr
+          - mipi-sys-t
+          - net-tools
+          - nrf_hw_models
+          - open-amp
+          - openthread
+          - segger
+          - tinycbor
+          - tinycrypt
+
+    # NCS repositories.
+    #
+    # Some of these are also Zephyr modules which have NCS-specific
+    # changes.
+    - name: mcuboot
+      repo-path: sdk-mcuboot
+      revision: v1.7.99-ncs1
+      path: bootloader/mcuboot
+    - name: nrfxlib
+      repo-path: sdk-nrfxlib
+      path: nrfxlib
+      revision: v1.5.1
+    - name: hal_nordic
+      repo-path: sdk-hal_nordic
+      path: modules/hal/nordic
+      revision: v1.5.1
+    - name: trusted-firmware-m
+      repo-path: sdk-trusted-firmware-m
+      path: modules/tee/tfm
+      revision: v1.2.99-ncs1
+    - name: tfm-mcuboot # This is used by the trusted-firmware-m module.
+      repo-path: sdk-mcuboot
+      path: modules/tee/tfm-mcuboot
+      revision: 81d19f017f18f1bc6bea906d96fd45fba3672064
+    - name: connectedhomeip
+      repo-path: sdk-connectedhomeip
+      path: modules/lib/connectedhomeip
+      revision: v1.5.1
+      submodules:
+        - name: nlio
+          path: third_party/nlio/repo
+        - name: nlassert
+          path: third_party/nlassert/repo
+        - name: pigweed
+          path: third_party/pigweed/repo
+    # Other third-party repositories.
+    - name: cmock
+      path: test/cmock
+      revision: 9d092898ef26ece140d9225e037274b64d4f851e
+      remote: throwtheswitch
+    - name: unity
+      path: test/cmock/vendor/unity
+      revision: 74cde089e65c3435ce9aa87d5c69f4f16b7f6ade
+      remote: throwtheswitch
+    - name: mbedtls-nrf
+      path: mbedtls
+      repo-path: mbedtls
+      revision: mbedtls-2.24.0
+      remote: armmbed
+    - name: nanopb
+      path: modules/lib/nanopb
+      revision: nanopb-0.4.2
+      remote: nanopb
+    - name: Alexa-Gadgets-Embedded-Sample-Code
+      path: modules/alexa-embedded
+      revision: face92d8c62184832793f518bb1f19379538c5c1
+      remote: alexa
+    - name: cddl-gen
+      remote: nordicsemi
+      revision: 24f1b2b0c64c694b7f9ac1b7eab60b39236ca0bf
+      path: modules/lib/cddl-gen
+
+  # West-related configuration for the nrf repository.
+  self:
+    # This repository should be cloned to ncs/nrf.
+    path: nrf
+    # This line configures west extensions which are currently only
+    # for internal use by NCS maintainers.
+    west-commands: scripts/west-commands.yml

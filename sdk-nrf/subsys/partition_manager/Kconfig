@@ -1,0 +1,186 @@
+#
+# Copyright (c) 2020 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+menu "Partition Manager"
+
+config PARTITION_MANAGER_ENABLED
+	bool "Partition manager is enabled (read-only option)"
+	help
+	  Option which can be checked to see whether or not the
+	  partition manager is enabled in the current build. Note that this
+	  should ideally be a hidden option, but it can't due to limitations
+	  in how parent images impose options on child images. Don't
+	  change the value of this option.
+
+# These values are now set by partition manager, so hide the option.
+config SRAM_SIZE
+	int
+	depends on !PARTITION_MANAGER_ENABLED
+
+# These values are now set by partition manager, so hide the option.
+config SRAM_BASE_ADDRESS
+	hex
+	depends on !PARTITION_MANAGER_ENABLED
+
+menu "Zephyr subsystem configurations"
+
+if FILE_SYSTEM_LITTLEFS
+partition=LITTLEFS
+partition-size=0x6000
+rsource "Kconfig.template.partition_size"
+endif
+
+
+if SETTINGS
+partition=SETTINGS_STORAGE
+partition-size=0x2000
+rsource "Kconfig.template.partition_size"
+endif
+
+if NVS && !SETTINGS_NVS
+partition=NVS_STORAGE
+partition-size=0x6000
+rsource "Kconfig.template.partition_size"
+endif
+
+if ZIGBEE && !SOC_NRF52833
+partition=ZBOSS_NVRAM
+partition-size=0x8000
+rsource "Kconfig.template.partition_size"
+endif
+
+if ZIGBEE && SOC_NRF52833
+partition=ZBOSS_NVRAM
+partition-size=0x4000
+rsource "Kconfig.template.partition_size"
+endif
+
+if ZIGBEE
+partition=ZBOSS_PRODUCT_CONFIG
+partition-size=0x1000
+rsource "Kconfig.template.partition_size"
+endif
+
+endmenu # Zephyr subsystem configurations
+
+
+menu "Zephyr samples configurations"
+
+if BT_RPMSG_NRF53 && SOC_NRF5340_CPUAPP
+module=HCI_RPMSG
+source "${ZEPHYR_BASE}/../nrf/subsys/partition_manager/Kconfig.template.build_strategy_domain"
+
+DT_CHOSEN_Z_IPC_SHM := zephyr,ipc_shm
+
+config RPMSG_NRF53_SRAM_SIZE
+	# Hidden configuration to expose DT property as kconfig variable
+	hex
+	default "$(dt_chosen_reg_size_hex,$(DT_CHOSEN_Z_IPC_SHM))"
+
+endif
+
+endmenu # Zephyr samples configurations
+
+menu "NCS subsystem configurations"
+
+endmenu # NCS subsystem configurations
+
+menu "NCS samples configurations"
+
+if NRF_802154_SER_HOST && SOC_NRF5340_CPUAPP
+module=802154_RPMSG
+source "${ZEPHYR_BASE}/../nrf/subsys/partition_manager/Kconfig.template.build_strategy_domain"
+endif
+
+endmenu # NCS samples configurations
+
+config PM_SINGLE_IMAGE
+	bool "Use the Partition Manager for single image builds"
+	select PARTITION_MANAGER_ENABLED
+	help
+	  Use the Partition Manager feature to partition the device even if
+	  only a single image is included in the build. This is typically set
+	  when a subsystem that defines its own Partition Manager configuration
+	  is included in the build.
+
+menuconfig PM_EXTERNAL_FLASH
+	bool "Support external flash in Partition Manager"
+
+if PM_EXTERNAL_FLASH
+
+config PM_EXTERNAL_FLASH_DEV_NAME
+	 string "Name of the external flash device"
+	help
+	  Must match the 'drv_name' argument used when initializing the
+	  driver for the external flash through the 'DEVICE...INIT'
+	  function call. The value is used when calling 'device_get_binding'.
+
+config PM_EXTERNAL_FLASH_SIZE
+	hex "External flash size (in bytes)"
+
+config PM_EXTERNAL_FLASH_BASE
+	hex "External flash base address"
+	default 0
+
+endif
+
+config BUILD_WITH_TFM
+	bool
+	select PM_SINGLE_IMAGE
+
+if BUILD_WITH_TFM
+
+config PM_PARTITION_SIZE_TFM_SRAM
+	hex "Memory reserved for TFM_RAM."
+	default 0x10000 if NRF_MODEM_LIB
+	default 0x16000 if SOC_NRF9160
+	default 0x40000 if SOC_NRF5340_CPUAPP
+	help
+	  Memory set aside for the TFM_SRAM partition.
+
+partition=BL2
+partition-size=0x8000
+rsource "Kconfig.template.partition_size"
+
+partition=TFM
+partition-size=0x40000
+rsource "Kconfig.template.partition_size"
+
+partition=TFM_EXTRA
+partition-size=0x10000
+rsource "Kconfig.template.partition_size"
+
+if NRF_MODEM_LIB
+
+config TFM_PROFILE
+	string "The build profile used for TFM Secure image."
+	default "profile_small"
+	help
+	  Use profile_small when the modem is enabled to get the RAM usage below
+	  64 kB, so the Modem's IPC RAM area can fit at 0x10000.
+	  This overrides the default TFM_PROFILE.
+
+endif # TFM_PROFILE
+endif # BUILD_WITH_TFM
+
+config PM_IMAGE_NOT_BUILT_FROM_SOURCE
+	bool
+	help
+	  Promptless helper config used to indicate that one or more
+	  image is not built from source.
+
+# Helper configs needed since 'SRAM_SIZE/BASE' use the chosen node.
+config PM_SRAM_BASE
+	hex
+	default $(dt_node_reg_addr_hex,/soc/memory@21000000) if SOC_NRF5340_CPUNET
+	default $(dt_node_reg_addr_hex,/soc/memory@20000000)
+
+config PM_SRAM_SIZE
+	hex
+	default $(dt_node_reg_size_hex,/soc/memory@21000000) if SOC_NRF5340_CPUNET
+	default $(dt_node_reg_size_hex,/soc/memory@20000000)
+
+endmenu # Partition Manager

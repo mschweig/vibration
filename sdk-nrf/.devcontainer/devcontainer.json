@@ -1,0 +1,29 @@
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.112.0/containers/docker-existing-dockerfile
+{
+	"name": "SDK-nRF v1.5.0 [MT]
+	// Sets the run context to one level up instead of the .devcontainer folder.
+	"context": "..",
+
+	// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+	"image": "nrf-v150-docker",
+
+	// Set *default* container specific settings.json values on container create.
+	"settings": { 
+		"terminal.integrated.shell.linux": "/bin/bash"
+	},
+	
+	"extensions": ["marus25.cortex-debug", "ms-vscode.cpptools"],
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Uncomment the next line to run commands after the container is created - for example installing git.
+	// "postCreateCommand": "apt-get update && apt-get install -y git",
+	
+	"workspaceMount":  "type=bind,source=${localWorkspaceFolder},target=/workdir/ncs/nrf",
+
+	"workspaceFolder": "/workdir/ncs/nrf",
+
+	"runArgs": ["--privileged"],
+
+}

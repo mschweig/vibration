@@ -36,11 +36,6 @@ void loop(void)
 
   while(1){
 
-    if (millis() > 2000){
-      analogWrite(A1,0);
-      break;
-    }
-
     results = ads.readADC_Differential_0_1();  
 
     //Serial.print("Differential: "); Serial.print(results); Serial.print("(");

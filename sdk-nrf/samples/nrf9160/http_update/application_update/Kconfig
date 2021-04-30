@@ -1,0 +1,36 @@
+#
+# Copyright (c) 2019 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+menu "HTTP application update sample"
+
+config DOWNLOAD_HOST
+	string "Application update host name"
+	help
+	  Host part of URL to application update binary. For example
+	  if the file is stored in http://foo.bar/update.bin the value
+	  of this configuration should be 'foo.bar'
+
+config DOWNLOAD_FILE
+	string "Application update file name"
+	help
+	  File part of URL to application update binary. For example
+	  if the file is stored in http://foo.bar/update.bin the value
+	  of this configuration should be 'update.bin'
+
+
+config APPLICATION_VERSION
+	int "Application version"
+	default 1
+
+config USE_HTTPS
+	bool
+	prompt "Use HTTPS for download"
+
+endmenu
+
+menu "Zephyr Kernel"
+source "Kconfig.zephyr"
+endmenu
