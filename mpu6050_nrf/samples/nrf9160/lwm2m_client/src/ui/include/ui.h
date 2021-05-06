@@ -137,8 +137,6 @@ typedef void (*ui_callback_t)(struct ui_evt *evt);
  */
 int ui_init(ui_callback_t cb);
 
-void mpu6050_init(void);
-
 /**
  * @brief Sets the LED pattern.
  *

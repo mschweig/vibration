@@ -6,6 +6,8 @@
 
 cmake_minimum_required(VERSION 3.13.1)
 
+set(spm_DTC_OVERLAY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/spm.overlay")
+
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(lwm2m_client)
 zephyr_compile_definitions(PROJECT_NAME=${PROJECT_NAME})

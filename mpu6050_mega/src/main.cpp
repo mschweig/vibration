@@ -48,14 +48,14 @@ void loop() {
 
    i++;
 
+    /*
    if (millis() - t_start >= 1000){
-    /**uint16_t t_end = millis();
-    Serial.println(t_end - t_start);
-    while(1);
-    **/
-   Serial.println(i);
-   while(1);
+        uint16_t t_end = millis();
+        Serial.println(t_end - t_start);
+        while(1);
+        Serial.println(i);
+        while(1);
    }
-   
+   */
   
 }

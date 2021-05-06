@@ -1,12 +1,12 @@
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.112.0/containers/docker-existing-dockerfile
 {
-	"name": "SDK-nRF v1.5.0 [MT]
+	"name": "sdk-nrf v1.5.0 [MT]
 	// Sets the run context to one level up instead of the .devcontainer folder.
 	"context": "..",
 
 	// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
-	"image": "sdk-cc-1.5.0",
+	"image": "nrf-v150-docker",
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": { 
