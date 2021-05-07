@@ -10,7 +10,7 @@
 #include "button.h"
 #include "buzzer.h"
 #include "led_pwm.h"
-#include "mpu6050.h"
+
 
 LOG_MODULE_REGISTER(ui, CONFIG_UI_LOG_LEVEL);
 
@@ -92,8 +92,6 @@ void ui_led_set_state(uint32_t led, uint8_t value)
 int ui_init(ui_callback_t cb)
 {
 	int err = 0;
-
-	mpu6050_init_ui();
 
 #ifdef CONFIG_UI_LED_USE_PWM
 	err = ui_leds_init();

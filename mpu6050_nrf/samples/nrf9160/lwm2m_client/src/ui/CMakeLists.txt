@@ -16,4 +16,4 @@ target_sources_ifdef(
 	CONFIG_UI_LED_USE_PWM
 	app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/led_pwm.c
 	)
-target_sources(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/mpu6050.c)
+target_sources(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/algorithm.c)

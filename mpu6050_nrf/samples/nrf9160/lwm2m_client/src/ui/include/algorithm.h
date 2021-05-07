@@ -9,8 +9,8 @@
  *	    control the buzzer output frequency.
  */
 
-#ifndef UI_MPU6050_H__
-#define UI_MPU6050_H__
+#ifndef ALGORITHM_H__
+#define ALGORITHM_H__
 
 #include <zephyr.h>
 #include "ui.h"
@@ -20,10 +20,10 @@ extern "C" {
 #endif
 
 /**@brief Initialize buzzer in the user interface module. */
-void mpu6050_init_ui(void);
+void algorithm_init(struct k_work_q *work_q);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* UI_MPU6050_H__ */
+#endif /* ALGORITHM_H__ */

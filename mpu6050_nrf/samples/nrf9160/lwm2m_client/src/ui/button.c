@@ -39,6 +39,7 @@ static void button_handler(uint32_t button_states, uint32_t has_changed)
 				: UI_EVT_BUTTON_INACTIVE;
 
 		callback(&evt);
+
 	}
 }
 

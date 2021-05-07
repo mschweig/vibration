@@ -28,6 +28,16 @@ LOG_MODULE_REGISTER(app_lwm2m_client, CONFIG_APP_LOG_LEVEL);
 #include "lwm2m_client.h"
 #include "settings.h"
 
+#if defined (CONFIG_MPU6050)
+/*Fill Level*/
+#include "algorithm.h"
+/*new thread*/
+#define MT_THREAD_STACK_SIZE 2048
+#define MT_PRIORITY -1
+K_THREAD_STACK_DEFINE(mt_stack_area, MT_THREAD_STACK_SIZE);
+static struct k_work_q mt_work_q;
+#endif
+
 #if !defined(CONFIG_LTE_LINK_CONTROL)
 #error "Missing CONFIG_LTE_LINK_CONTROL"
 #endif
@@ -410,6 +420,14 @@ void main(void)
 	k_sem_init(&lwm2m_restart, 0, 1);
 
 	ui_init(ui_evt_handler);
+	
+#if defined(CONFIG_MPU6050)
+	/*Init work queue for MT Algorithm*/
+	k_work_q_start(&mt_work_q, mt_stack_area,
+               K_THREAD_STACK_SIZEOF(mt_stack_area), MT_PRIORITY);
+	/*call algorithm in workqueue*/
+	algorithm_init(&mt_work_q);
+#endif
 
 	ret = fota_settings_init();
 	if (ret < 0) {
