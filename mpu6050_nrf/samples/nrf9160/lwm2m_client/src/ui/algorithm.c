@@ -14,6 +14,12 @@
 #include <arm_const_structs.h>
 #include <drivers/gpio.h>
 
+/*CALIBRATION THREAD*/
+#define CALIBRATION_THREAD_STACK_SIZE 2048
+#define CALIBRATION_PRIORITY -1
+K_THREAD_STACK_DEFINE(calibration_stack_area, CALIBRATION_THREAD_STACK_SIZE);
+static struct k_work_q calibration_work_q;
+
 LOG_MODULE_REGISTER(algorithm, CONFIG_UI_LOG_LEVEL);
 
 /*GPIO device*/
@@ -29,13 +35,16 @@ static const struct device *gpio_dev;
 static struct gpio_callback gpio_cb;
 
 static bool button_pressed = false;
-static bool start_calibration = false;
+static uint8_t calibration_state = 0;
 
 /*Number of Sensor samples*/
 #define NFFT 512
 
 /* BIN to FREQUENCY Formula
 (SIGNAL_FREQUENCY/BIN_INDEX) = (SAMPLE_FREQUENCY/FFT_SIZE*2) --> Bin 159 = 110 Hz
+
+SAMPLE_FREQUENCY = 720Hz 
+SIGNAL_FREQUENCY = 110Hz
 */
 
 /*Calculate FFT*/
@@ -668,32 +677,55 @@ static float32_t measureVibration(){
 	return signal;
 }
 
-/*Run Calibration Mechanism*/
-static float32_t calibration(){
+/*Calibration Mechanism*/
+static float32_t calibration(struct k_work_q *work_q, uint8_t part){
 
-	start_calibration = true;
-	/*wait for button event --> empty*/
-	LOG_WRN("Press Button for Calibration at empty level");
-	measureVibration();
-	float32_t empty = cmsisFFT();
+	if (part == 0){
+		calibration_state = 1;
+		LOG_WRN("Started Calibration at empty level");
+		//measureVibration();
+		//float32_t empty = cmsisFFT();
+		LOG_WRN("Press Button for Calibration at half level");
+		//return empty;
+	}
+
+	if (part == 1){
+		calibration_state = 2;
+		//measureVibration();
+		//float32_t half = cmsisFFT();
+		LOG_WRN("Press Button for Calibration at full level");
+		//return half;
+	}
 	
-	/*wait for button event --> fill up to half*/
-	LOG_WRN("Press Button for Calibration at half level");
-	measureVibration();
-	float32_t half = cmsisFFT();
-
-	/*wait for button event --> fill up to full*/
-	LOG_WRN("Press Button for Calibration at full level");
-	measureVibration();
-	float32_t full = cmsisFFT();
-
-	return 0;
+	if (part == 2){
+		//measureVibration();
+		//float32_t full = cmsisFFT();
+		LOG_WRN("Calibration finished!");
+		calibration_state = 0;
+		//return full;
+	}else{
+		return -1;
+	}
+	
 }
 
 void button_pressed_callback(const struct device *gpiob, struct gpio_callback *cb, gpio_port_pins_t pins)
 {
-	LOG_WRN("Button pressed");
+	LOG_WRN("Calibation-Button pressed");
 	button_pressed = true;
+
+	if (calibration_state == 0){
+		/*call calibration in workqueue*/
+		calibration(&calibration_work_q, 0);
+	}
+	if (calibration_state == 1){
+		/*call calibration in workqueue*/
+		calibration(&calibration_work_q, 1);
+	}
+	if (calibration_state == 2){
+		/*call calibration in workqueue*/
+		calibration(&calibration_work_q, 2);
+	}
 	
 }
 
@@ -739,6 +771,10 @@ void algorithm_init(struct k_work_q *work_q)
 	/*Initialize MPU6050*/
 	processMPU6050();
 
+	/*Init work queue for Calibration Algorithm*/
+	k_work_q_start(&calibration_work_q, calibration_stack_area,
+               K_THREAD_STACK_SIZEOF(calibration_stack_area), CALIBRATION_PRIORITY);
+	
 }
 
 #ifdef CONFIG_MPU6050_TRIGGER
