@@ -32,7 +32,7 @@ LOG_MODULE_REGISTER(app_lwm2m_client, CONFIG_APP_LOG_LEVEL);
 /*Fill Level*/
 #include "algorithm.h"
 /*new thread*/
-#define MT_THREAD_STACK_SIZE 2048
+#define MT_THREAD_STACK_SIZE 4096
 #define MT_PRIORITY -1
 K_THREAD_STACK_DEFINE(mt_stack_area, MT_THREAD_STACK_SIZE);
 static struct k_work_q mt_work_q;
