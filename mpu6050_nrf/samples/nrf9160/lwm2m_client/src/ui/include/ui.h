@@ -138,6 +138,20 @@ typedef void (*ui_callback_t)(struct ui_evt *evt);
 int ui_init(ui_callback_t cb);
 
 /**
+ * @brief Sets the Fill level value to LwM2M engine.
+ *
+ * @param measurement Fill level measurement (0-100%)
+ */
+void handle_level_events(float measurement);
+
+/**
+ * @brief Sets the Fill level resource of LwM2M engine.
+ *
+ * @return 0 on success
+ */
+int lwm2m_init_level(void);
+
+/**
  * @brief Sets the LED pattern.
  *
  * @param pattern LED pattern.

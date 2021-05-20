@@ -309,7 +309,8 @@ static float32_t measureLevel(struct k_work *work_q){
 	if (level > empty){
 		printk("Measured Level: 0 \n");
 	}
-	
+	/*Hand level to LwM2M engine*/
+	handle_level_events((float)y);
 	return y;
 }
 
@@ -336,7 +337,6 @@ void button_pressed_callback(const struct device *gpiob, struct gpio_callback *c
 		k_work_submit(&measurement_data_work);
 	}
 
-	
 }
 
 bool init_button(void)
@@ -392,6 +392,8 @@ void algorithm_init(struct k_work_q *work_q)
 	k_work_init(&calibration_full_data_work, calibration_full);
 	k_work_init(&measurement_data_work, measureLevel);
 	
+	/*Set LwM2M resources*/
+	lwm2m_init_level();
 
 	LOG_WRN("Press Button to start Calibration at empty level");
 	
