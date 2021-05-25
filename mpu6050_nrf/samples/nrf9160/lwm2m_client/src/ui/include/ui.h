@@ -145,6 +145,13 @@ int ui_init(ui_callback_t cb);
 void handle_level_events(float measurement);
 
 /**
+ * @brief Sets the temperature from MPU6050 value to LwM2M engine.
+ *
+ * @param measurement temperature in degrees
+ */
+void handle_temp_events(float measurement);
+
+/**
  * @brief Sets the Fill level resource of LwM2M engine.
  *
  * @return 0 on success

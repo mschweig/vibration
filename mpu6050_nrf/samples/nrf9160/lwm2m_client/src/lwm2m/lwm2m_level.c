@@ -21,6 +21,8 @@ void handle_level_events(float measurement)
 	
     memset(&level,0,sizeof(level));
 
+	LOG_DBG("Setting Fill Level to LwM2M engine");
+
     level.val1 = measurement;
     
     lwm2m_engine_set_float32("3202/0/5600 ",&level);

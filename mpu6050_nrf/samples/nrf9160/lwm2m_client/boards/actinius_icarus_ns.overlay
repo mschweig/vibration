@@ -1,0 +1,20 @@
+&i2c2 {
+	status = "disabled";
+};
+&i2c1 {
+	compatible = "nordic,nrf-twim";
+	status = "okay";
+	sda-pin = <30>;                
+    scl-pin = <31>;
+	clock-frequency = <400000>;
+	mpu6050@68 {
+		compatible = "invensense,mpu6050";
+		reg = <0x68>;
+		status = "okay";
+		label = "MPU6050";
+		int-gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
+	};
+};
+&uart1 {
+	status = "disabled";
+};

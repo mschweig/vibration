@@ -29,7 +29,7 @@ static const struct device *gpio_dev;
 static const struct device *mpu6050;
 
 /*Buttons*/
-#define BUTTON_NODE    		DT_NODELABEL(button2) //= Button 1 on DK WTF
+#define BUTTON_NODE    		DT_NODELABEL(button0) //= Button 1 on DK WTF
 #define BUTTON_GPIO_LABEL	DT_GPIO_LABEL(BUTTON_NODE, gpios)
 #define BUTTON_GPIO_PIN		DT_GPIO_PIN(BUTTON_NODE, gpios)
 #define BUTTON_GPIO_FLAGS	GPIO_INPUT | DT_GPIO_FLAGS(BUTTON_NODE, gpios)
@@ -174,37 +174,36 @@ static void controlVibration(bool status){
 static float32_t processMPU6050()
 {
 	struct sensor_value temperature;
-	struct sensor_value accel[3];
+	struct sensor_value accel;
 
 	int rc = sensor_sample_fetch(mpu6050);
 
 	if (rc == 0) {
-		rc = sensor_channel_get(mpu6050, SENSOR_CHAN_ACCEL_XYZ,
-					accel);
-	}
-	if (rc == 0) {
-		rc = sensor_channel_get(mpu6050, SENSOR_CHAN_AMBIENT_TEMP,
-					&temperature);
-	}
-	if (rc == 0) {
-		/*
-		printk("[%s]:%g Cel\n"
-		       "  accel %f %f %f m/s/s\n"
-		       "  gyro  %f %f %f rad/s\n",
-		       now_str(),
-		       sensor_value_to_double(&temperature),
-		       sensor_value_to_double(&accel[0]),
-		       sensor_value_to_double(&accel[1]),
-		       sensor_value_to_double(&accel[2]),
-		       sensor_value_to_double(&gyro[0]),
-		       sensor_value_to_double(&gyro[1]),
-		       sensor_value_to_double(&gyro[2])); */
-		//printk("%f\n",sensor_value_to_double(&accel[2]));
-	} else {
-		LOG_ERR("sample fetch/get failed: %d", rc);
+		rc = sensor_channel_get(mpu6050, SENSOR_CHAN_ACCEL_Z,
+					&accel);
 	}
 
-	return sensor_value_to_double(&accel[2]);
+	//query temp only when already calibrated TODO: include temp in calibration
+	if (calibration_state == 3){
+		if (rc == 0) {
+			rc = sensor_channel_get(mpu6050, SENSOR_CHAN_AMBIENT_TEMP,
+						&temperature);
+			printk("Temperature: %f\n", sensor_value_to_double(&temperature));
+			return sensor_value_to_double(&temperature);
+		} else {
+		LOG_ERR("Temp sample fetch/get failed: %d", rc);
+		return 0;
+		}
+	}
+
+	if (rc == 0) {
+		return sensor_value_to_double(&accel);
+	} else {
+		LOG_ERR("sample fetch/get failed: %d", rc);
+		return 0;
+	}
+
+	
 }
 
 /*Control Vibration Motor and Measure*/
@@ -275,7 +274,7 @@ static float32_t calibration_full(struct k_work *work_q){
 	return full;
 }
 
-static float32_t measureLevel(struct k_work *work_q){
+static void measureLevel(struct k_work *work_q){
 
 	LOG_WRN("Started Non-Invasive Fill Level Measurement");
 	measureVibration();
@@ -287,31 +286,47 @@ static float32_t measureLevel(struct k_work *work_q){
 	float P2y = 50;
 	float P3x = empty; 
 	float P3y = 0;
-	float k1, d1, k2, d2, y;
+	float k1, d1, k2, d2, y = 0;
 
 	if (level < P2x){
 		k1 = (P2y-P1y) / (P2x-P1x);
 		d1 = (P2y - (P2x*k1));
 		y = k1*(level)+d1;
-		printk("Measured Level: %f \n", y);
+
+		if (y > 0 && y < 100)
+			printk("Measured Level: %f \n", y);
 	}
-	if (level > P2x){
+	else if (level > P2x){
 		k2 = (P3y-P2y) / (P3x-P2x);
 		d2 = (P3y - (P3x*k2));
 		y = k2*(level)+d2;
-		printk("Measured Level: %f \n", y);
+
+		if (y > 0 && y < 100)
+			printk("Measured Level: %f \n", y);
 	}
 
-	if (level < full){
-		printk("Measured Level: 100 \n");
+	else if(level < full){
+
+		if (y > 0 && y < 100){
+			printk("Measured Level: 100 \n");
+			y = 100;
+		}
 	}
 
-	if (level > empty){
-		printk("Measured Level: 0 \n");
+	else if(level > empty){
+
+		if (y > 0 && y < 100){
+			printk("Measured Level: 0 \n");
+			y = 0;
+		}
 	}
-	/*Hand level to LwM2M engine*/
-	handle_level_events((float)y);
-	return y;
+	/*Hand level and temperature to LwM2M engine*/
+	if (y > 0 && y < 100){
+		handle_level_events((float)y);
+		calibration_state = 3;
+		handle_temp_events((float)processMPU6050());
+		calibration_state = 2;
+	}
 }
 
 void button_pressed_callback(const struct device *gpiob, struct gpio_callback *cb, gpio_port_pins_t pins)
