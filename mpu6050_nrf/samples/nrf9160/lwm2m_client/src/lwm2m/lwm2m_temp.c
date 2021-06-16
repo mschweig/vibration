@@ -18,6 +18,7 @@ static int32_t timestamp;
 void handle_temp_events(float measurement)
 {
     temp_float.val1 = measurement;
+	temp_float.val2 = 0;
 
 	LOG_DBG("Setting Temperature to LwM2M engine");
 

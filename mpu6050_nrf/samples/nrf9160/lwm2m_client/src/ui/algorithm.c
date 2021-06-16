@@ -186,13 +186,12 @@ static float32_t processMPU6050()
 	//query temp only when already calibrated TODO: include temp in calibration
 	if (calibration_state == 3){
 		if (rc == 0) {
-			rc = sensor_channel_get(mpu6050, SENSOR_CHAN_AMBIENT_TEMP,
-						&temperature);
+			rc = sensor_channel_get(mpu6050, SENSOR_CHAN_AMBIENT_TEMP, &temperature);
 			printk("Temperature: %f\n", sensor_value_to_double(&temperature));
-			return sensor_value_to_double(&temperature);
+			return (float)sensor_value_to_double(&temperature);
 		} else {
-		LOG_ERR("Temp sample fetch/get failed: %d", rc);
-		return 0;
+			LOG_ERR("Temp sample fetch/get failed: %d", rc);
+			return 0;
 		}
 	}
 
@@ -202,8 +201,6 @@ static float32_t processMPU6050()
 		LOG_ERR("sample fetch/get failed: %d", rc);
 		return 0;
 	}
-
-	
 }
 
 /*Control Vibration Motor and Measure*/
@@ -212,7 +209,7 @@ static void measureVibration(){
 	controlVibration(1);
 
 	//wait until motor drives up
-	k_sleep(K_SECONDS(2));
+	k_sleep(K_SECONDS(1));
 	
 	if(calibration_state == 0){
 		for (uint16_t i = 0; i<NFFT; i++){
@@ -258,8 +255,12 @@ static float32_t calibration_empty(struct k_work *work_q){
 
 static float32_t calibration_half(struct k_work *work_q){
 
-	measureVibration();
-	half = cmsisFFT(calibration_state);
+	while (half == 0 || half > empty){
+		measureVibration();
+		half = cmsisFFT(calibration_state);
+		k_sleep(K_SECONDS(2));
+
+	}
 	LOG_WRN("Press Button for Calibration at full level");
 	calibration_state = 1;
 	return half;
@@ -267,8 +268,11 @@ static float32_t calibration_half(struct k_work *work_q){
 
 static float32_t calibration_full(struct k_work *work_q){
 
-	measureVibration();
-	full = cmsisFFT(calibration_state);
+	while (full == 0 || full > half){
+		measureVibration();
+		full = cmsisFFT(calibration_state);
+		k_sleep(K_SECONDS(2));
+	}
 	LOG_WRN("Calibration finished!");
 	calibration_state = 2;
 	return full;
@@ -293,38 +297,36 @@ static void measureLevel(struct k_work *work_q){
 		d1 = (P2y - (P2x*k1));
 		y = k1*(level)+d1;
 
-		if (y > 0 && y < 100)
+		if (y >= 0 && y <= 100)
 			printk("Measured Level: %f \n", y);
 	}
-	else if (level > P2x){
+	if (level > P2x){
 		k2 = (P3y-P2y) / (P3x-P2x);
 		d2 = (P3y - (P3x*k2));
 		y = k2*(level)+d2;
 
-		if (y > 0 && y < 100)
+		if (y >= 0 && y <= 100)
 			printk("Measured Level: %f \n", y);
 	}
 
-	else if(level < full){
+	if(level < full){
 
-		if (y > 0 && y < 100){
-			printk("Measured Level: 100 \n");
-			y = 100;
-		}
+		printk("Measured Level: 100 \n");
+		y = 100;
 	}
 
-	else if(level > empty){
+	if(level > empty){
 
-		if (y > 0 && y < 100){
-			printk("Measured Level: 0 \n");
-			y = 0;
-		}
+		printk("Measured Level: 0 \n");
+		y = 0;
 	}
+
 	/*Hand level and temperature to LwM2M engine*/
-	if (y > 0 && y < 100){
+	if (y >= 0 && y <= 100){
 		handle_level_events((float)y);
 		calibration_state = 3;
-		handle_temp_events((float)processMPU6050());
+		float temperature = processMPU6050();
+		handle_temp_events(temperature);
 		calibration_state = 2;
 	}
 }
