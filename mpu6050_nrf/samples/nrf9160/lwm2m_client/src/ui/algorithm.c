@@ -23,7 +23,7 @@ LOG_MODULE_REGISTER(algorithm, CONFIG_UI_LOG_LEVEL);
 
 /*GPIO device*/
 static const struct device *gpio_dev;
-#define VIBRATION_PIN 16
+#define VIBRATION_PIN 19
 
 /*MPU6050 Device*/
 static const struct device *mpu6050;
@@ -36,11 +36,10 @@ static const struct device *mpu6050;
 
 /*GPIO Callback*/
 static struct gpio_callback gpio_cb;
-static bool start_measurement = false;
 static float calibration_state = 0;
 
 /*Number of Sensor samples*/
-#define NFFT 512
+#define NFFT 256
 
 /* BIN to FREQUENCY Formula
 (SIGNAL_FREQUENCY/BIN_INDEX) = (SAMPLE_FREQUENCY/FFT_SIZE*2) --> Bin 159 = 110 Hz
@@ -166,7 +165,7 @@ static float calculateFrequency(int t_start, int t_end){
 /*Control Vibration Motor*/
 static void controlVibration(bool status){
 
-	gpio_pin_set(gpio_dev, 16, status);
+	gpio_pin_set(gpio_dev, VIBRATION_PIN, status);
 
 }
 
@@ -209,7 +208,7 @@ static void measureVibration(){
 	controlVibration(1);
 
 	//wait until motor drives up
-	k_sleep(K_SECONDS(1));
+	k_sleep(K_MSEC(500));
 	
 	if(calibration_state == 0){
 		for (uint16_t i = 0; i<NFFT; i++){
@@ -284,6 +283,7 @@ static void measureLevel(struct k_work *work_q){
 	measureVibration();
 	float32_t level = cmsisFFT(calibration_state);
 
+	//y = k*x+d
 	float P1x = full; 
 	float P1y = 100;
 	float P2x = half;
@@ -324,9 +324,9 @@ static void measureLevel(struct k_work *work_q){
 	/*Hand level and temperature to LwM2M engine*/
 	if (y >= 0 && y <= 100){
 		handle_level_events((float)y);
-		calibration_state = 3;
-		float temperature = processMPU6050();
-		handle_temp_events(temperature);
+		//calibration_state = 3;
+		//float temperature = processMPU6050();
+		//handle_temp_events(temperature);
 		calibration_state = 2;
 	}
 }
@@ -334,8 +334,6 @@ static void measureLevel(struct k_work *work_q){
 void button_pressed_callback(const struct device *gpiob, struct gpio_callback *cb, gpio_port_pins_t pins)
 {
 	LOG_DBG("Button pressed");
-
-	start_measurement = true;
 
 	if (calibration_state == 0){
 		//call calibration in workqueue
@@ -388,7 +386,7 @@ void algorithm_init(struct k_work_q *work_q)
 	gpio_dev = device_get_binding(DT_LABEL(DT_NODELABEL(gpio0)));
 	if (!gpio_dev){
            LOG_ERR("Error binding GPIO-PORT 0");
-           return 0;
+		   return;
 	}
 	gpio_pin_configure(gpio_dev, VIBRATION_PIN, GPIO_OUTPUT);
 
